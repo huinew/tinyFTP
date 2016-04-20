@@ -1,14 +1,17 @@
+#define SEND_BUF_MAX 1024
 char * host_name = "127.0.0.1";
 int port = 8000;
 
 int main(int argc , char * argv[])
 {
     char buf[8192];
+    char *user_name = "li_tingting";
+    char *password = "12345";
     //char message[256];
     int socket_descriptor;
     struct sockaddr_in server;
     char * str ="A default test string";
-    char send_buf[1024] = {0};
+    char send_buf[SEND_BUF_MAX] = {0};
     if(argc < 2)
     {
             printf("we will send a default test string.\n");
@@ -56,13 +59,25 @@ int main(int argc , char * argv[])
             exit(1);
     }
 
-    sprintf(send_buf, "USER %s\r\n","li_tingting");
+    sprintf(send_buf, "USER %s\r\n", username);
     write(socket_descriptor, send_buf, strlen(send_buf));
     //client receive response code and message from server
     //correct message:"331 User name okey, need password"
-    read(socket_descriptor, buf, strlen(buf));    
-
+    read(socket_descriptor, buf, strlen(buf)); 
     printf("\nResponse from server:\n\n%s\n",buf);
+    
+    sprintf(send_buf, "PASS %s\r\n", password);
+    write (control_sock, send_buf, strlen(send_buf));
+    
+    read(socket_descriptor, buf, strlen(buf)); 
+    printf("\nResponse from server:\n\n%s\n",buf);
+    
+    //passive mode
+    sprintf(send_buf, "PASV\r\n");
+    
+    write(control_sock, send_buf, strlen(send_buf));
+    //It shold be 227 Entering passive mode<h1,h2,h3,h4,p1,p2>
+    read(socket_descriptor, buf, strlen(buf));
     close(socket_descriptor);
     return 1;
 
