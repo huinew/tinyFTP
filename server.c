@@ -10,8 +10,27 @@
 #define HOST_NAME_MAX 255
 #endif
 
-extern init_server(int, const struct sockaddr* ,socklen_t, int);
+init_server(const struct sockaddr* , int);
 
+int init_server(const struct sockaddr* ,int port)
+{
+	int server_fd;
+	struct sockaddr_in srv_addr;
+	int ruse = 1;
+
+	bzero(&server_addr,sizeof(server_addr));
+	server_addr.sin_family = AF_INET;
+	server_addr.sin_port = htons(port);
+	if ((server_fd =  socket(AF_INET,SOCK_STREAM,0)) == -1)
+	{
+			perror("error opening socket \n");
+			return -1;
+	}
+	
+	if (setsockopt(server_fd, SOL_SOCKET, SOREUSEADDR, &reuse, sizeof(int)) < 0)
+	{}
+	return server_fd;
+}
 void serve(int sockfd)
 {
 	int clfd, status;
