@@ -28,7 +28,22 @@ int init_server(const struct sockaddr* ,int port)
 	}
 	
 	if (setsockopt(server_fd, SOL_SOCKET, SOREUSEADDR, &reuse, sizeof(int)) < 0)
-	{}
+	{
+		goto errout;
+	}
+	
+	if (bind(server_fd, addr, alen) < 0)
+	{
+		goto errout;	
+	}
+	if ((type == SOCK_STREAM) || (type == SOCK_SEQPACKET))
+	{
+		if (listen(server_fd, qlen) < 0)
+		{
+			goto errout;
+		}
+		
+	}
 	return server_fd;
 }
 void serve(int sockfd)
