@@ -3,53 +3,80 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/wait.h>
+#include <sys/socket.h>
 
 #define LOG_ERR -1
 
-#ifndef HOST_NAME_MAX
-#define HOST_NAME_MAX 255
-#endif
+//max backlog num for func listen
+#define MAX_QUE_LEN 10
+#define MAX_BUF_SIZE 1024
+//status of init server
+enum
+{
+	INIT_SRV_SUCCESS,
+	INIT_SRV_FAILED
+}
 
-init_server(const struct sockaddr* , int);
+init_server(int);
 
-int init_server(const struct sockaddr* ,int port)
+int init_server(int port)
 {
 	int server_fd;
-	struct sockaddr_in srv_addr;
+	struct sockaddr_in server_addr;
 	int ruse = 1;
 
 	bzero(&server_addr,sizeof(server_addr));
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(port);
-	if ((server_fd =  socket(AF_INET,SOCK_STREAM,0)) == -1)
+	
+	if ((server_fd = socket(AF_INET,SOCK_STREAM,0)) == -1)
 	{
-			perror("error opening socket \n");
-			return -1;
+		perror("error opening socket \n");
+		return INIT_SRV_FAILED;
 	}
 	
+	/* make server address can be reused after program existed */
 	if (setsockopt(server_fd, SOL_SOCKET, SOREUSEADDR, &reuse, sizeof(int)) < 0)
 	{
 		goto errout;
 	}
 	
-	if (bind(server_fd, addr, alen) < 0)
+	if (bind(server_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0)
 	{
 		goto errout;	
 	}
+	
 	if ((type == SOCK_STREAM) || (type == SOCK_SEQPACKET))
 	{
-		if (listen(server_fd, qlen) < 0)
+		if (listen(server_fd, MAX_QUE_LEN) < 0)
 		{
 			goto errout;
 		}
 		
 	}
+
 	return server_fd;
+	errout：
+		err = errno;
+		close(server_fd);
+		errno = err;
+		return INIT_SRV_FAILED;
 }
-void serve(int sockfd)
+
+void serve(int port)
 {
-	int clfd, status;
+	struct sockaddr_in cli_addr;
+	int cli_addr_len = 0;
+	int srv_sock = 0;
+	int connect_fd = 0;
+	int status = 0;
 	pid_t pid;
+	char rcv_buffer[MAX_BUF_SIZE] = {0};
+	
+	memset(rcv_buffer, 0, MAX_BUF_SIZE);
+	
+	srv_sock = init_server(port);
+	connect_fd = accept(srv_sock, (struct sockaddr*)&cli_addr, &cli_addr_len);
 	
 	set_cloexec(sockfd);
 	
@@ -61,7 +88,9 @@ void serve(int sockfd)
 		}
 		
 		if ((pid = fork()) < 0)
-		{}
+		{
+			
+		}
 		else if ( pid == 0 )
 		{
 			
@@ -76,21 +105,6 @@ void serve(int sockfd)
 
 int main(int argc, char* argv[])
 {
-	struct addrinfo *ailist = NULL;
-	struct addrinfo *aip = NULL;
-	struct addrinfo hint;
-	int sockfd = 0;
-	int err = 0; 
-	int host_name_len = 0;
-
-	for (aip = ailist; aip != NULL; aip = aip->ai_next)
-	{
-		if ((sockfd = init_server(SOCK_STREAM, aip->ai_addr,
-		aip->ai_addrlen, QLEN)) >= 0)
-		{
-			serve(sockfd);
-			return -1;
-		}
-	}
-	return -1;
+	server(1024);
+	return 0;
 }
