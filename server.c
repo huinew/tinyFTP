@@ -51,9 +51,7 @@ int init_server(int port)
 
 	return server_fd;
 	errout：
-		err = errno;
 		close(server_fd);
-		errno = err;
 		return INIT_SRV_FAILED;
 }
 
@@ -71,9 +69,7 @@ void serve(int port)
 	
 	srv_sock = init_server(port);
 	
-	set_cloexec(sockfd);
-	
-	for(;;)
+	while(1)
 	{
 		if ((connect_fd = accept(server_sock, (struct sockaddr*)&client_addr, &client_addr_len)) < 0)
 		{
