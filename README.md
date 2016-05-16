@@ -1,4 +1,16 @@
 # tinyFTP
 a simple ftp client and server demo.
-Aim to make this prj easy to use.Well, the code at first might be very ugly.But I'll try to make it better.
-Don't hesitate to tell me if you got an advice for this,I will be appreciated for it.
+Later, this program's structure will like :
+ /Common
+    common.c
+    common.h
+ /Server
+    server.h
+    server.c
+    srv_command_handle.c
+    srv_command_handle.c
+ /Client
+    client.h
+    client.c
+ 
+
