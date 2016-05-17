@@ -8,6 +8,7 @@
 #define MAX_CMD_LEN 5
 
 #define LOGIN_SUCCESS 0
+#define LOGIN_ERR -1
 #define ARG_ERR -2
 
 int get_user_name(char* buf, char* username)
@@ -45,6 +46,117 @@ int get_user_pwd(char* buf, char* password)
   return 0;
 }
 
+char* trim_space(char* pwd, int pwd_len)
+{
+		// remove end of line and whitespace, so do the start
+		while (pwd_len && isspace((int)pwd[pwd_len - 1]))
+		{
+			pwd[pwd_len - 1] = '\0';
+			pwd_len--;	
+		}		
+		while(pwd_len && isspace((int)*pwd))
+		{
+			pwd++;
+			pwd_len--;
+		}		
+	return pwd;
+}
+
+int srv_check_user(char*user, char*pass)
+{
+	char username[MAXSIZE];
+	char password[MAXSIZE];
+	char buf[MAXSIZE];
+	char *usr_str = NULL;								
+	FILE* fd = NULL;
+	int pwd_len = 0;
+	
+	fd = fopen("auth", "r");
+	if (fd == NULL)
+	{
+		perror("file not found");
+		exit(1);
+	}	
+
+	while (fgets(buf, MAXSIZE, fd)) 
+	{	
+		usr_str = strtok (buf," ");
+		strcpy(username, usr_str);
+
+		if (usr_str != NULL) 
+		{
+			usr_str = strtok (NULL, " ");
+			strcpy(password, usr_str);
+		}
+
+		pwd_len = strlen(password);
+		
+		if ((password = trim_space(password)) == NULL)
+		{
+			return LOGIN_ERR;
+		}
+		
+		if ((strcmp(user,username) == 0) && (strcmp(pass,password) == 0)) 
+		{
+			return LOGIN_SUCCESS;
+			break;
+		}		
+	}
+	fclose(fd);	
+	return LOGIN_ERR;
+}
+
+int srv_check_user(char*user, char*pass)
+{
+	char username[MAXSIZE];
+	char password[MAXSIZE];
+	char buf[MAXSIZE];
+	char *usr_str = NULL;								
+	FILE* fd = NULL;
+	int pwd_len = 0;
+	
+	fd = fopen("auth", "r");
+	if (fd == NULL)
+	{
+		perror("file not found");
+		exit(1);
+	}	
+
+	while (fgets(buf, MAXSIZE, fd)) 
+	{	
+		usr_str = strtok (buf," ");
+		strcpy(username, usr_str);
+
+		if (usr_str != NULL) 
+		{
+			usr_str = strtok (NULL, " ");
+			strcpy(password, usr_str);
+		}
+
+		pwd_len = strlen(password);
+		
+		// remove end of line and whitespace, so do the start
+		while (pwd_len && isspace((int)password[pwd_len - 1]))
+		{
+			password[pwd_len - 1] = '\0';
+			pwd_len--;	
+		}		
+		while(pwd_len && isspace((int)*password))
+		{
+			password++;
+			pwd_len--;
+		}		
+
+		if ((strcmp(user,username) == 0) && (strcmp(pass,password) == 0)) 
+		{
+			return LOGIN_SUCCESS;
+			break;
+		}		
+	}
+	fclose(fd);	
+	return LOGIN_ERR;
+}
+
 int srv_user_login()
 {
   char buf[MAX_BUF_SIZE] = {0};
@@ -57,7 +169,7 @@ int srv_user_login()
   if (get_user_pwd(buf, password) < 0)
     return ARG_ERR;
     
-  return LOGIN_SUCCESS;
+  return srv_user_check(user, password);
 }
 
 int command_process(int sock_control)
