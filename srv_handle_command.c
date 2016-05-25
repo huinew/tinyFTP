@@ -62,6 +62,21 @@ char* trim_space(char* pwd, int pwd_len)
 	return pwd;
 }
 
+int srv_user_login()
+{
+  char buf[MAX_BUF_SIZE] = {0};
+  char user[MAX_BUF_SIZE] = {0};
+  char password[MAX_BUF_SIZE] = {0};
+
+  if (get_user_name(buf, user) < 0)
+    return ARG_ERR;
+
+  if (get_user_pwd(buf, password) < 0)
+    return ARG_ERR;
+    
+  return srv_user_check(user, password);
+}
+
 int srv_check_user(char*user, char*pass)
 {
 	char username[MAXSIZE];
@@ -93,6 +108,7 @@ int srv_check_user(char*user, char*pass)
 		
 		if ((password = trim_space(password)) == NULL)
 		{
+			fclose(fd);
 			return LOGIN_ERR;
 		}
 		
@@ -106,77 +122,15 @@ int srv_check_user(char*user, char*pass)
 	return LOGIN_ERR;
 }
 
-int srv_check_user(char*user, char*pass)
-{
-	char username[MAXSIZE];
-	char password[MAXSIZE];
-	char buf[MAXSIZE];
-	char *usr_str = NULL;								
-	FILE* fd = NULL;
-	int pwd_len = 0;
-	
-	fd = fopen("auth", "r");
-	if (fd == NULL)
-	{
-		perror("file not found");
-		exit(1);
-	}	
 
-	while (fgets(buf, MAXSIZE, fd)) 
-	{	
-		usr_str = strtok (buf," ");
-		strcpy(username, usr_str);
-
-		if (usr_str != NULL) 
-		{
-			usr_str = strtok (NULL, " ");
-			strcpy(password, usr_str);
-		}
-
-		pwd_len = strlen(password);
-		
-		// remove end of line and whitespace, so do the start
-		while (pwd_len && isspace((int)password[pwd_len - 1]))
-		{
-			password[pwd_len - 1] = '\0';
-			pwd_len--;	
-		}		
-		while(pwd_len && isspace((int)*password))
-		{
-			password++;
-			pwd_len--;
-		}		
-
-		if ((strcmp(user,username) == 0) && (strcmp(pass,password) == 0)) 
-		{
-			return LOGIN_SUCCESS;
-			break;
-		}		
-	}
-	fclose(fd);	
-	return LOGIN_ERR;
-}
-
-int srv_user_login()
-{
-  char buf[MAX_BUF_SIZE] = {0};
-  char user[MAX_BUF_SIZE] = {0};
-  char password[MAX_BUF_SIZE] = {0};
-
-  if (get_user_name(buf, user) < 0)
-    return ARG_ERR;
-
-  if (get_user_pwd(buf, password) < 0)
-    return ARG_ERR;
-    
-  return srv_user_check(user, password);
-}
-
+//chilid process handles connections to client
 int command_process(int sock_control)
 {
   int sock_data;
   char cmd[MAX_CMD_LEN] = {0};
-
+  char args[MAX_BUF_LEN] = {0};
+  int rc = 0;
+  
 // Authenticate user
   if (srv_user_login(sock_control) == LOGIN_SUCCESS) 
   {
@@ -187,4 +141,13 @@ int command_process(int sock_control)
     send_response(sock_control, 430);
     exit(0);
   } 
+  //wait for command
+  while(1)
+  {
+  	//recv_cmd
+  	rc = recv_command(sock_control,cmd, args);
+  	//data connection
+  	//execute command
+  	//close connection
+  }
 }
