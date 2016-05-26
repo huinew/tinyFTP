@@ -10,6 +10,7 @@
 #define LOGIN_SUCCESS 0
 #define LOGIN_ERR -1
 #define ARG_ERR -2
+#define READ_DATA_ERR -3
 
 int get_user_name(char* buf, char* username)
 {
@@ -122,6 +123,15 @@ int srv_check_user(char*user, char*pass)
 	return LOGIN_ERR;
 }
 
+int recv_command(int sock_fd, char *cmd, char *args)
+{
+	char buf[MAX_BUF_SIZE] = {0};
+	if (recv(sock_fd, buf, MAX_BUF_SIZE) < 0)
+	{
+		return 	READ_DATA_ERR;
+	}
+	strncpy(cmd, buf, 4);
+}
 
 //chilid process handles connections to client
 int command_process(int sock_control)
@@ -129,7 +139,7 @@ int command_process(int sock_control)
   int sock_data;
   char cmd[MAX_CMD_LEN] = {0};
   char args[MAX_BUF_LEN] = {0};
-  int rc = 0;
+  int resp_code = 0;
   
 // Authenticate user
   if (srv_user_login(sock_control) == LOGIN_SUCCESS) 
@@ -145,7 +155,7 @@ int command_process(int sock_control)
   while(1)
   {
   	//recv_cmd
-  	rc = recv_command(sock_control,cmd, args);
+  	resp_code = recv_command(sock_control,cmd, args);
   	//data connection
   	//execute command
   	//close connection
