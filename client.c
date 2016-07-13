@@ -2,6 +2,45 @@
 char * host_name = "127.0.0.1";
 int port = 8000;
 
+
+struct command_info* input_command(char* usr_cmd)
+{
+	struct command_list* cmd_info = NULL;
+	char* savestate;
+	char* token;
+	int i, j;
+	cmd_list = (struct command_info*)malloc(sizeof(command_info));
+	if (!cmd_list)
+	{
+		printf("Failed to allocate space for cmd list.\n");
+		return -1;
+	}
+	
+	cmd->id = -1;
+	for(i = 0; ; i++, s = NULL)
+	{
+		token = strtok_r(usr_cmd, " \t\n", &savestate);
+		if(token == NULL)
+			break;
+		if(cmd->id == -1)
+		{
+			for(j = 0; j < MAX_CMD_NUM; j++)
+			{	
+				if(!strcmp(token, cmd_list[j].key))
+				{
+					cmd_info->id = cmd_list[j].id;
+					break;
+				}
+			}// ommitting braces for the "for loop" here is \
+			 disastrous because the else below gets \
+			 associated with the "if inside the for loop". \
+		}
+		else
+			append_path(cmd, token);
+	}
+}
+
+
 int main(int argc , char * argv[])
 {
     char buf[8192];
